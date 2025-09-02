@@ -26,6 +26,8 @@ def load_data():
 @st.cache_resource
 def load_fine_tuned_model():
     import os
+    from transformers import AutoConfig
+    
     # Try to find the model in different possible locations
     possible_paths = [
         "./fine_tuned_model",
@@ -42,13 +44,35 @@ def load_fine_tuned_model():
     if model_path is None:
         st.error("❌ Could not find the fine-tuned model directory. Please ensure the 'fine_tuned_model' folder exists in the project root.")
         st.stop()
-        
+    
     try:
+        # Load tokenizer
         tokenizer = AutoTokenizer.from_pretrained(model_path)
-        model = AutoModelForSequenceClassification.from_pretrained(model_path)
+        
+        # Load config
+        config = AutoConfig.from_pretrained(model_path)
+        
+        # Initialize model with config
+        model = AutoModelForSequenceClassification.from_config(config)
+        
+        # Try to load weights from safetensors if available
+        safetensors_path = os.path.join(model_path, "model.safetensors")
+        if os.path.exists(safetensors_path):
+            from safetensors.torch import load_file
+            state_dict = load_file(safetensors_path)
+            # Remove any unexpected keys that might cause issues
+            model_state_dict = model.state_dict()
+            filtered_state_dict = {k: v for k, v in state_dict.items() if k in model_state_dict}
+            model_state_dict.update(filtered_state_dict)
+            model.load_state_dict(model_state_dict, strict=False)
+        
         return tokenizer, model
+            
     except Exception as e:
-        st.error(f"❌ Error loading the model: {str(e)}")
+        # Provide more detailed error information
+        import traceback
+        error_details = traceback.format_exc()
+        st.error(f"❌ Error loading the model: {str(e)}\n\nDebug info:\n{error_details}")
         st.stop()
 
 # Load FLAN-T5 model for few-shot learning
