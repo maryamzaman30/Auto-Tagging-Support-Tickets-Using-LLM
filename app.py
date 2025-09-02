@@ -25,10 +25,31 @@ def load_data():
 # Load fine-tuned model
 @st.cache_resource
 def load_fine_tuned_model():
-    model_path = "./fine_tuned_model"
-    tokenizer = AutoTokenizer.from_pretrained(model_path)
-    model = AutoModelForSequenceClassification.from_pretrained(model_path)
-    return tokenizer, model
+    import os
+    # Try to find the model in different possible locations
+    possible_paths = [
+        "./fine_tuned_model",
+        "fine_tuned_model",
+        "/mount/src/auto-tagging-support-tickets-using-llm/fine_tuned_model"
+    ]
+    
+    model_path = None
+    for path in possible_paths:
+        if os.path.exists(path) and os.path.isdir(path):
+            model_path = path
+            break
+            
+    if model_path is None:
+        st.error("❌ Could not find the fine-tuned model directory. Please ensure the 'fine_tuned_model' folder exists in the project root.")
+        st.stop()
+        
+    try:
+        tokenizer = AutoTokenizer.from_pretrained(model_path)
+        model = AutoModelForSequenceClassification.from_pretrained(model_path)
+        return tokenizer, model
+    except Exception as e:
+        st.error(f"❌ Error loading the model: {str(e)}")
+        st.stop()
 
 # Load FLAN-T5 model for few-shot learning
 @st.cache_resource
