@@ -70,8 +70,9 @@ pip install -r requirements.txt
 ```
 
 ### Running the Application
-1. Launch the Streamlit app:
+1. Run `ticket_classifier.ipynb` to fine-tune the DistilBERT model and save it to `./fine_tuned_model`.
+2. Launch the Streamlit app:
 ```bash
 streamlit run app.py
 ```
-2. Access the web interface at `http://localhost:8501`.
+3. Access the web interface at `http://localhost:8501`.
